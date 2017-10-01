@@ -1,0 +1,72 @@
+version: "3.2"
+services:
+    gateway:
+        volumes:
+            - "/var/run/docker.sock:/var/run/docker.sock"
+        ports:
+            - 8080:8080
+        image: functions/gateway:0.6.3
+        networks:
+            - functions
+        environment:
+            dnsrr: "true"  # Temporarily use dnsrr in place of VIP while issue persists on PWD
+        deploy:
+            placement:
+                constraints:
+                    - 'node.role == manager'
+                    - 'node.platform.os == linux'
+
+    privateregistry:
+        image: registry:2
+        volumes:
+            - registry:/var/lib/registry
+        ports:
+            - 5001:5001
+        networks:
+            - functions
+        environment:
+            REGISTRY_HTTP_ADDR: "0.0.0.0:5001"
+            REGISTRY_HTTP_TLS_CERTIFICATE: /run/secrets/builder_domain.crt
+            REGISTRY_HTTP_TLS_KEY: /run/secrets/builder_domain.key
+        secrets:
+            - builder_domain.crt
+            - builder_domain.key
+        deploy:
+            placement:
+                constraints:
+                    - 'node.role == manager'
+                    - 'node.platform.os == linux'
+
+    server:
+        image: theaxer/builderpoc:latest
+        ports:
+            - 9090:9090
+        networks:
+            - functions
+        command: [
+            "builder",
+            "-port=9090",
+            "-host=0.0.0.0",
+            "-registry=privateregistry:5001"
+        ]
+        volumes:
+            - "/var/run/docker.sock:/var/run/docker.sock"
+        deploy:
+            placement:
+                constraints:
+                    - 'node.role == worker'
+                    - 'node.platform.os == linux'
+secrets:
+    builder_domain.crt:
+        file: ./certs/domain.crt
+    builder_domain.key:
+        file: ./certs/domain.key
+
+
+volumes:
+    registry:
+
+networks:
+    functions:
+        # external:
+        #     name: functions
