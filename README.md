@@ -50,7 +50,7 @@ The project currently fails to push images to the private repository because the
 
 ```sh
 eval $(docker-machine env worker1)
-docker exec $(docker ps --filter "name=builderpoc_server" -q) dig private registry
+docker exec $(docker ps --filter "name=builderpoc_server" -q) dig privateregistry
 ```
 
 You can validate that the registry is running by using

@@ -53,7 +53,7 @@ function setup {
 
 
     echo "creating registry certs"
-    openssl req -batch -subj /CN=privateregistry\
+    openssl req -batch -subj /CN=$REGISTRYNAME\
           -newkey rsa:4096 -nodes -sha256 -keyout certs/domain.key \
           -x509 -days 365 -out certs/domain.crt
     echo "Copying registry certs to each machine"
