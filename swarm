@@ -30,6 +30,8 @@ DOCKERMACHINEDRIVER="xhyve"
 
 MANAGERNAME="manager1"
 WORKERNAME="worker1"
+REGISTRYNAME="privateregistry"
+REGISTRYPORT="5001"
 
 function setup {
 
@@ -48,6 +50,22 @@ function setup {
 
     echo "Update node labels"
     docker-machine ssh lab-manager1 "docker node update --label-add registry=true $MANAGERNAME" 1>/dev/null
+
+
+    echo "creating registry certs"
+    openssl req -batch -subj /CN=privateregistry\
+          -newkey rsa:4096 -nodes -sha256 -keyout certs/domain.key \
+          -x509 -days 365 -out certs/domain.crt
+    echo "Copying registry certs to each machine"
+
+    docker-machine scp ./certs/domain.crt $MANAGERNAME:/tmp/ca.crt
+    docker-machine ssh $MANAGERNAME "sudo mkdir -p /etc/docker/certs.d/$REGISTRYNAME:$REGISTRYPORT/"
+    docker-machine ssh $MANAGERNAME "sudo mv /tmp/ca.crt /etc/docker/certs.d/$REGISTRYNAME:$REGISTRYPORT/ca.crt"
+
+    docker-machine scp ./certs/domain.crt $WORKERNAME:/tmp/ca.crt
+    docker-machine ssh $WORKERNAME "sudo mkdir -p /etc/docker/certs.d/$REGISTRYNAME:$REGISTRYPORT/"
+    docker-machine ssh $WORKERNAME "sudo mv /tmp/ca.crt /etc/docker/certs.d/$REGISTRYNAME:$REGISTRYPORT/ca.crt"
+
 
     echo "# Run this command to configure your docker environment to use the lab-manager1 vm:"
     echo "# eval \$(docker-machine env $MANAGERNAME)"
@@ -110,16 +128,6 @@ function removehost {
     fi
 }
 
-function create_registry_certs {
-    if ! [ -e "./certs/domain.crt" ]; then
-        echo "Creating certs for the registry"
-        openssl req \
-          -newkey rsa:4096 -nodes -sha256 -keyout certs/domain.key \
-          -x509 -days 365 -out certs/domain.crt
-    else
-        echo "using the certs found in ./certs"
-    fi
-}
 
 function deploy_stack {
     echo "Deploying the $STACKNAME stack"
@@ -148,7 +156,6 @@ function usage {
 case "$1" in
     init)
         setup
-        create_registry_certs
         ;;
     leave)
         leave_swarm

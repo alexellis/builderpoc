@@ -79,6 +79,7 @@ func buildFunction(w http.ResponseWriter, r *http.Request) {
 	log.Printf("Tagging image as %s\n", target)
 	err = dockerclient.ImageTag(ctx, source, target)
 	if err != nil {
+		fmt.Fprint(w, "Image tag failed")
 		log.Fatal(err)
 	}
 
