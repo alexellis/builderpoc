@@ -167,9 +167,11 @@ case "$1" in
         status
         ;;
     deploy)
+        eval $(docker-machine env $MANAGERNAME)
         deploy_stack
         ;;
     stop)
+        eval $(docker-machine env $MANAGERNAME)
         stop
         ;;
     build)

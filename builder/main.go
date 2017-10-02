@@ -70,17 +70,24 @@ func buildFunction(w http.ResponseWriter, r *http.Request) {
 	log.Println("Starting Image pull")
 	response, err := dockerclient.ImagePull(ctx, source, pullOpts)
 	if err != nil {
-		log.Fatal(err)
+		fmt.Fprintf(w, "Image pull failed with:\n\t%s", err)
+		log.Println(err)
+		return
 	}
 	defer response.Close()
 
-	jsonmessage.DisplayJSONMessagesStream(response, os.Stdout, os.Stdout.Fd(), true, nil)
+	if err := jsonmessage.DisplayJSONMessagesStream(response, os.Stdout, os.Stdout.Fd(), true, nil); err != nil {
+		fmt.Fprintf(w, "Image pull failed with:\n\t%s", err)
+		log.Println(err)
+		return
+	}
 
 	log.Printf("Tagging image as %s\n", target)
 	err = dockerclient.ImageTag(ctx, source, target)
 	if err != nil {
 		fmt.Fprint(w, "Image tag failed")
-		log.Fatal(err)
+		log.Println(err)
+		return
 	}
 
 	log.Println("Starting Image push")
@@ -90,11 +97,16 @@ func buildFunction(w http.ResponseWriter, r *http.Request) {
 	response, err = dockerclient.ImagePush(ctx, target, pushOpts)
 	if err != nil {
 		fmt.Fprintf(w, "Push to private repo failed %s", err)
-		log.Fatal(err)
+		log.Println(err)
+		return
 	}
 	defer response.Close()
 
-	jsonmessage.DisplayJSONMessagesStream(response, os.Stdout, os.Stdout.Fd(), true, nil)
+	if err := jsonmessage.DisplayJSONMessagesStream(response, os.Stdout, os.Stdout.Fd(), true, nil); err != nil {
+		fmt.Fprintf(w, "Image push failed due to:\n%s", err)
+		log.Println(err)
+		return
+	}
 	fmt.Fprintf(w, "Push to private repo complete")
 }
 
