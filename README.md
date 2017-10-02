@@ -5,7 +5,7 @@ This project aims to show a minimal working private registry in a multi-node doc
 
 ## Setup
 
-The proejct is uses [`vndr`](https://github.com/LK4D4/vndr), run
+The project is uses [`vndr`](https://github.com/LK4D4/vndr), run
 
 ```sh
 $ go get github.com/LK4D4/vndr
