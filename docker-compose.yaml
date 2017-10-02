@@ -47,7 +47,7 @@ services:
             "builder",
             "-port=9090",
             "-host=0.0.0.0",
-            "-registry=privateregistry:5001"
+            "-registry=localhost:5001"
         ]
         volumes:
             - "/var/run/docker.sock:/var/run/docker.sock"
